@@ -1,5 +1,10 @@
 # somepeople reading club — 카드뉴스 제작 폴더
 
+## 자동 게시
+이 저장소는 GitHub Pages로 공개 호스팅되며(`https://dlcjdtn456789-svg.github.io/somepeople-reading-club/`),
+`../automation/publish_daily.js`가 인스타그램 Graph API로 오늘 날짜 폴더를 자동 캐러셀 게시합니다.
+설정 방법은 [`automation/README.md`](../automation/README.md) 참고 — 액세스 토큰 발급 전까지는 수동 게시 필요.
+
 ## 구조
 ```
 카드뉴스/
