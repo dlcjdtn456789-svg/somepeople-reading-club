@@ -1,12 +1,17 @@
 // somepeople reading club - daily Instagram carousel publisher.
 //
 // Publishes the card news for today's date (matching a 카드뉴스/YYYY-MM-DD
-// folder) as an Instagram carousel post, using the Instagram Graph API.
+// folder) as an Instagram carousel post, using the Instagram API with
+// Instagram Login (graph.instagram.com) - not the classic Facebook
+// Page-linked Graph API.
 //
 // Required environment variables:
-//   IG_ACCESS_TOKEN - long-lived Page/User access token with
-//                      instagram_basic + instagram_content_publish scopes
-//   IG_BUSINESS_ID  - the Instagram Business Account ID (numeric string)
+//   IG_ACCESS_TOKEN - long-lived Instagram User access token (starts with
+//                      "IGAA...") with instagram_business_basic +
+//                      instagram_business_content_publish scopes
+//   IG_BUSINESS_ID  - the Instagram-scoped User ID returned by
+//                      GET https://graph.instagram.com/v21.0/me (NOT the
+//                      classic "Instagram Business Account ID")
 //
 // Images must already be publicly reachable (this project hosts them via
 // GitHub Pages). Update GITHUB_PAGES_BASE below if the repo/owner changes.
@@ -15,7 +20,7 @@ const fs = require("fs");
 const path = require("path");
 
 const GRAPH_API_VERSION = "v21.0";
-const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
+const GRAPH_BASE = `https://graph.instagram.com/${GRAPH_API_VERSION}`;
 
 const GITHUB_PAGES_BASE = "https://dlcjdtn456789-svg.github.io/somepeople-reading-club";
 const CARDNEWS_DIR_NAME = "카드뉴스";
@@ -23,8 +28,47 @@ const CARDNEWS_DIR_NAME = "카드뉴스";
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const CARDNEWS_ROOT = path.join(PROJECT_ROOT, CARDNEWS_DIR_NAME);
 const PUBLISHED_LOG = path.join(__dirname, "published.json");
+const TOKEN_STORE = path.join(__dirname, "token.json");
 
 const SLIDE_COUNT = 7;
+
+// Reads the working access token from token.json if we've saved a refreshed
+// one before; otherwise bootstraps from the IG_ACCESS_TOKEN env var (first run).
+function loadAccessToken() {
+  if (fs.existsSync(TOKEN_STORE)) {
+    return JSON.parse(fs.readFileSync(TOKEN_STORE, "utf-8")).access_token;
+  }
+  return process.env.IG_ACCESS_TOKEN;
+}
+
+function saveAccessToken(accessToken, expiresInSeconds) {
+  fs.writeFileSync(
+    TOKEN_STORE,
+    JSON.stringify(
+      {
+        access_token: accessToken,
+        refreshed_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + expiresInSeconds * 1000).toISOString(),
+      },
+      null,
+      2
+    ),
+    "utf-8"
+  );
+}
+
+// Instagram long-lived tokens last ~60 days and can be refreshed (without the
+// app secret) once they're at least 24h old. Refreshing after every run means
+// this never expires as long as the daily task keeps running.
+async function refreshAccessToken(accessToken) {
+  const qs = new URLSearchParams({ grant_type: "ig_refresh_token", access_token: accessToken });
+  const resp = await fetch(`https://graph.instagram.com/refresh_access_token?${qs}`);
+  const json = await resp.json();
+  if (!resp.ok) {
+    throw new Error(`Token refresh failed: ${JSON.stringify(json)}`);
+  }
+  return json;
+}
 
 function loadPublishedLog() {
   if (fs.existsSync(PUBLISHED_LOG)) {
@@ -112,11 +156,20 @@ async function publishContainer(igUserId, accessToken, creationId) {
 }
 
 async function main() {
-  const accessToken = process.env.IG_ACCESS_TOKEN;
+  let accessToken = loadAccessToken();
   const igUserId = process.env.IG_BUSINESS_ID;
   if (!accessToken || !igUserId) {
     console.error("ERROR: set IG_ACCESS_TOKEN and IG_BUSINESS_ID environment variables first.");
     process.exit(1);
+  }
+
+  try {
+    const refreshed = await refreshAccessToken(accessToken);
+    accessToken = refreshed.access_token;
+    saveAccessToken(accessToken, refreshed.expires_in);
+    console.log(`  token refreshed, valid ~${Math.round(refreshed.expires_in / 86400)} more days`);
+  } catch (err) {
+    console.log(`  (token refresh skipped: ${err.message})`);
   }
 
   const dateStr = process.env.PUBLISH_DATE_OVERRIDE || new Date().toISOString().slice(0, 10);
