@@ -1,0 +1,64 @@
+# Builds the drum-tuner iOS app on Expo's cloud macOS machines (EAS Build).
+# Run it from GitHub: Actions → "Drum tuner iOS build" → Run workflow.
+# Requires the repository secret EXPO_TOKEN (expo.dev → Account settings → Access tokens),
+# and one interactive build from a PC first (scripts/build-ios.ps1) so EAS has the Apple credentials.
+name: Drum tuner iOS build
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'preview = 등록한 아이폰에 설치 / production = App Store·TestFlight'
+        type: choice
+        options: [preview, production]
+        default: preview
+      submit:
+        description: 'production 빌드를 App Store Connect에 자동 업로드'
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: drum-tuner
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: drum-tuner/package-lock.json
+
+      - name: Check EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Repository secret EXPO_TOKEN is missing. Create one at expo.dev → Account settings → Access tokens."
+            exit 1
+          fi
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: 27.11.0
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: Typecheck and tests
+        run: |
+          npx tsc --noEmit
+          npm test
+
+      - name: Start EAS build
+        env:
+          PROFILE: ${{ inputs.profile }}
+          SUBMIT: ${{ inputs.submit && inputs.profile == 'production' }}
+        run: |
+          args=(--platform ios --profile "$PROFILE" --non-interactive --no-wait)
+          if [ "$SUBMIT" = "true" ]; then args+=(--auto-submit); fi
+          eas build "${args[@]}"
+          echo "빌드 진행 상황: https://expo.dev 의 프로젝트 → Builds" >> "$GITHUB_STEP_SUMMARY"

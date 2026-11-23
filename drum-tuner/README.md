@@ -58,28 +58,44 @@ npx expo start --tunnel
 
 > 이 앱은 Expo SDK에 기본으로 들어 있는 `expo-audio`만 쓰기 때문에 Expo Go에서 실행됩니다. 나중에 Expo Go에 없는 네이티브 라이브러리를 추가하면 Expo Go 대신 개발 빌드가 필요합니다(`eas build --profile development`).
 
-### 3. 실제 앱으로 빌드하기 (EAS)
+### 3. PC에서 iOS 앱 빌드하기 (`build-ios.bat`)
 
-[Apple Developer Program](https://developer.apple.com/programs/)(연 $99) 계정과 [Expo 계정](https://expo.dev/signup)이 필요합니다.
+iOS 빌드는 Expo 클라우드의 macOS 서버(EAS Build)에서 돌아갑니다. PC에서는 명령을 보내기만 하면 됩니다.
 
-```powershell
-npm install -g eas-cli
-eas login
-eas build:configure            # 처음 한 번
-eas device:create              # 테스트할 아이폰 등록 (internal 배포용)
-eas build -p ios --profile preview
-```
+**필요한 것**
+- [Apple Developer Program](https://developer.apple.com/programs/) 계정 (연 $99)
+- [Expo 계정](https://expo.dev/signup) (무료)
 
-빌드가 끝나면 링크나 QR 코드가 나옵니다. 아이폰에서 열면 앱이 설치됩니다. 인증서와 프로비저닝 프로파일은 EAS가 대신 만들어 줍니다.
+**빌드 방법:** `drum-tuner` 폴더의 **`build-ios.bat`를 더블클릭**합니다. 스크립트가 다음을 순서대로 진행합니다.
 
-### 4. App Store / TestFlight에 올리기
+1. Node.js가 설치되어 있는지 확인합니다.
+2. `npm install`로 패키지를 설치합니다.
+3. Expo 로그인을 확인하고, 로그인되어 있지 않으면 로그인을 요청합니다.
+4. 처음 실행할 때 한 번, Expo 프로젝트를 연결합니다(`eas init`). 그러면 `app.json`에 `projectId`가 추가됩니다. **이 변경은 커밋해 두세요.** GitHub 빌드에 필요합니다.
+5. 메뉴에서 원하는 작업을 고릅니다.
+   - `1` 내 아이폰 등록하기: 테스트 설치 전에 한 번 합니다. 화면에 나온 링크를 아이폰 Safari로 열어 프로파일을 설치하세요.
+   - `2` 테스트 빌드: 빌드가 끝나면 링크나 QR 코드가 나옵니다. 아이폰에서 열면 앱이 설치됩니다.
+   - `3` App Store / TestFlight 빌드: 빌드 후 App Store Connect에 자동으로 업로드합니다.
+   - `4` 최근 빌드 목록 보기
 
-```powershell
-eas build -p ios --profile production
-eas submit -p ios --latest
-```
+첫 iOS 빌드에서는 Apple ID 로그인을 물어봅니다. 그러면 EAS가 인증서와 프로비저닝 프로파일을 만들어 Expo 서버에 저장합니다. Apple 로그인을 입력해야 하므로 **첫 빌드는 꼭 PC에서** 하세요.
 
-`eas submit`은 빌드를 App Store Connect에 업로드합니다. 그 뒤 TestFlight 테스트와 심사 제출은 [App Store Connect](https://appstoreconnect.apple.com) 웹사이트에서 진행합니다.
+App Store에 올린 뒤의 TestFlight 테스트와 심사 제출은 [App Store Connect](https://appstoreconnect.apple.com) 웹사이트에서 진행합니다.
+
+### 4. GitHub에서 버튼으로 빌드하기 (아이패드에서도 가능)
+
+PC에서 첫 빌드를 마친 뒤에는 PC 없이도 빌드할 수 있습니다.
+
+**처음 한 번 설정**
+1. [expo.dev](https://expo.dev)에서 **Account settings → Access tokens**로 가서 토큰을 만듭니다.
+2. GitHub 저장소의 **Settings → Secrets and variables → Actions**에서 `EXPO_TOKEN`이라는 이름으로 그 토큰을 저장합니다.
+
+**빌드할 때마다**
+1. GitHub 저장소의 **Actions → Drum tuner iOS build → Run workflow**를 누릅니다.
+2. `preview`(테스트 설치)와 `production`(App Store) 중 하나를 고릅니다.
+3. 빌드 진행 상황과 설치 링크는 expo.dev의 프로젝트 → Builds에서 확인합니다.
+
+워크플로는 빌드를 맡기기 전에 타입 검사와 테스트를 먼저 실행합니다. 둘 중 하나라도 실패하면 빌드하지 않습니다.
 
 ### 번들 ID 바꾸기
 
