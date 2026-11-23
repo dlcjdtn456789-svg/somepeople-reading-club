@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '../components/Text.tsx';
 import type { DrumHit } from '../audio/useDrumMic.ts';
 import { centsBetween, frequencyToNote } from '../audio/pitch.ts';
 import type { DrumPreset } from '../data/drums.ts';

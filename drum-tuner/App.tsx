@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useFonts } from 'expo-font';
+import { FONT_FILES, Text } from './src/components/Text.tsx';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useDrumMic, type DrumHit } from './src/audio/useDrumMic.ts';
@@ -11,6 +13,10 @@ import { colors } from './src/theme.ts';
 type Tab = 'tuner' | 'lugs';
 
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts(FONT_FILES);
+  // Wait for Pretendard; if loading fails, fall back to the system font.
+  if (!fontsLoaded && !fontError) return <View style={styles.root} />;
+
   return (
     <SafeAreaProvider>
       <DrumTuner />

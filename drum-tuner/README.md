@@ -97,3 +97,12 @@ npm run typecheck   # TypeScript 검사
 - 조용한 곳에서, 휴대폰을 드럼에서 30cm~1m 떨어진 곳에 두세요.
 - 러그 튜닝을 할 때는 반대쪽 헤드를 손으로 눌러 울림을 막아야 값이 안정됩니다.
 - 프리셋 음정 범위는 참고용입니다. 원하는 소리에 맞춰 목표 음정을 직접 정하고, **방금 친 소리를 목표로** 버튼을 활용하세요.
+
+## 폰트
+
+한글 폰트로 [Pretendard](https://github.com/orioncactus/pretendard)(SIL OFL 1.1)를 씁니다.
+
+- **사용 굵기:** Regular, SemiBold, Bold, ExtraBold
+- **파일 위치:** `assets/fonts/`, 라이선스는 `Pretendard-LICENSE.txt`
+- **글자 범위:** 앱 용량을 줄이려고 Pretendard 공식 서브셋(KS X 1001 한글 2,350자 + 라틴 문자·기호)만 남겼습니다.
+- **사용법:** 화면에서는 `src/components/Text.tsx`의 `Text`를 쓰세요. `fontWeight`를 지정하면 맞는 Pretendard 굵기 파일이 자동으로 선택됩니다.

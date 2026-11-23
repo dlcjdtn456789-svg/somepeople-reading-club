@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Text } from '../components/Text.tsx';
 import { centsBetween } from '../audio/pitch.ts';
 import { LUG_COUNTS } from '../data/drums.ts';
 import { colors, deviationColor } from '../theme.ts';

@@ -34,7 +34,8 @@
           "recordAudioAndroid": true,
           "enableBackgroundPlayback": false
         }
-      ]
+      ],
+      "expo-font"
     ],
     "backgroundColor": "#0f1115"
   }
